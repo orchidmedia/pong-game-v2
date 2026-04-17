@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Pong</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPCEtLSBQYWRkbGUgaGFuZGxlIC0tPgogIDxyZWN0IHg9IjEyIiB5PSIyMSIgd2lkdGg9IjYiIGhlaWdodD0iMTEiIHJ4PSIyIiBmaWxsPSIjMTExIi8+CiAgPCEtLSBQYWRkbGUgaGVhZCAtLT4KICA8Y2lyY2xlIGN4PSIxNCIgY3k9IjEzIiByPSIxMSIgZmlsbD0iIzExMSIvPgogIDwhLS0gRmFjZSBjdXRvdXQgZm9yIGNlbnRlciBsaW5lIGRldGFpbCAtLT4KICA8Y2lyY2xlIGN4PSIxNCIgY3k9IjEzIiByPSI4LjUiIGZpbGw9IiMzMzMiLz4KICA8IS0tIENlbnRlciB2ZXJ0aWNhbCBsaW5lIC0tPgogIDxyZWN0IHg9IjEzIiB5PSIyIiB3aWR0aD0iMiIgaGVpZ2h0PSIyMiIgZmlsbD0iIzExMSIvPgogIDwhLS0gR3JpcCBsaW5lcyBvbiBoYW5kbGUgLS0+CiAgPHJlY3QgeD0iMTEiIHk9IjI1IiB3aWR0aD0iOCIgaGVpZ2h0PSIxLjUiIHJ4PSIwLjUiIGZpbGw9IiM1NTUiLz4KICA8cmVjdCB4PSIxMSIgeT0iMjgiIHdpZHRoPSI4IiBoZWlnaHQ9IjEuNSIgcng9IjAuNSIgZmlsbD0iIzU1NSIvPgo8L3N2Zz4K">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- ══ MENU ═════════════════════════════════════════════════════════ -->
+  <div id="menu" class="screen visible">
+    <h1>PONG</h1>
+
+    <div class="label">Mode</div>
+    <div class="btn-group">
+      <button id="btn-vs-cpu"   class="active" onclick="selectMode('cpu')">vs Computer</button>
+      <button id="btn-vs-human" onclick="selectMode('human')">Local</button>
+      <button id="btn-online"   onclick="selectMode('online')">Online</button>
+    </div>
+
+    <div class="label" id="diff-label">Difficulty</div>
+    <div class="btn-group" id="diff-group">
+      <button id="btn-easy"   onclick="selectDiff('easy')">Easy</button>
+      <button id="btn-medium" class="active" onclick="selectDiff('medium')">Medium</button>
+      <button id="btn-hard"   onclick="selectDiff('hard')">Hard</button>
+    </div>
+
+    <button id="btn-start" onclick="startGame()"
+      style="margin-top:6px;font-size:clamp(14px,4vw,18px);padding:clamp(10px,2.5vw,12px) clamp(30px,8vw,48px);">
+      START
+    </button>
+
+    <!-- Online panel -->
+    <div id="online-panel">
+      <!-- Step 1: choose action -->
+      <div id="ol-choice" class="ol-actions">
+        <button onclick="createRoom()">Create Room</button>
+        <button onclick="showJoinForm()">Join Room</button>
+      </div>
+      <!-- Step 2a: waiting as host -->
+      <div id="ol-waiting" style="display:none;flex-direction:column;align-items:center;gap:10px;">
+        <div class="label">Your room code</div>
+        <div id="ol-code-display"></div>
+        <div id="ol-status">Waiting for opponent…</div>
+        <button onclick="cancelRoom()" style="font-size:13px;padding:6px 16px;opacity:0.6;">Cancel</button>
+      </div>
+      <!-- Step 2b: join form -->
+      <div id="ol-join-form" style="display:none;flex-direction:column;align-items:center;gap:10px;">
+        <div class="label">Enter room code</div>
+        <input id="ol-code-input" maxlength="4" autocomplete="off" spellcheck="false" placeholder="XXXX"
+          oninput="this.value=this.value.toUpperCase()">
+        <div class="ol-actions">
+          <button onclick="joinRoom()">Join</button>
+          <button onclick="showOlChoice()" style="opacity:0.6;">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth card -->
+    <div id="auth-card">
+      <div id="auth-loading" class="label">Connecting…</div>
+      <div id="auth-signin">
+        <div class="label">Your name</div>
+        <div id="name-row">
+          <input id="guest-name-input" type="text" maxlength="20" placeholder="Enter your name"
+            autocomplete="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter'){saveGuestName(this.value);showNameSaved();}">
+          <button id="btn-save-name" onclick="saveGuestName(document.getElementById('guest-name-input').value);showNameSaved();">Save</button>
+        </div>
+        <div id="name-saved" style="font-size:11px;opacity:0;color:#fff;transition:opacity 0.3s;">✓ Saved</div>
+        <div class="label" style="margin-top:4px">Sign in to save scores online</div>
+        <div class="auth-provider-btns">
+          <button onclick="signInGoogle()">
+            <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.7 5.4 2.9 13.3l7.8 6C12.5 13 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.2 5.2-4.6 6.8l7.2 5.6c4.2-3.9 6.1-9.6 7.1-16.4z"/><path fill="#FBBC05" d="M10.7 28.3A14.7 14.7 0 0 1 9.5 24c0-1.5.3-3 .7-4.3L2.9 13.3A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.9 10.7l7.8-6.4z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.2-5.6c-2 1.4-4.6 2.2-8 2.2-6.2 0-11.5-4.2-13.3-9.8l-7.8 6c3.8 7.6 11.8 12.7 21.1 12.7z"/></svg>
+            Google
+          </button>
+          <button onclick="signInGithub()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.32-1.75-1.32-1.75-1.08-.74.08-.72.08-.72 1.2.08 1.83 1.23 1.83 1.23 1.06 1.82 2.79 1.3 3.47.99.11-.77.41-1.3.75-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.13 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub
+          </button>
+        </div>
+      </div>
+      <div id="auth-user">
+        <img id="auth-avatar" src="" alt="" style="display:none;">
+        <div><div id="auth-name"></div><div id="auth-provider"></div></div>
+        <button id="auth-signout" onclick="doSignOut()">Sign out</button>
+      </div>
+    </div>
+
+    <button onclick="showLeaderboard()" style="padding:8px 24px;opacity:0.65;">Leaderboard</button>
+  </div>
+
+  <!-- ══ GAME ══════════════════════════════════════════════════════════ -->
+  <div id="game">
+    <div id="game-wrap">
+      <div id="game-top">
+        <button class="game-ctrl-btn" onclick="goToMenu()">&#8592; Menu</button>
+        <div id="message"></div>
+        <div id="game-right-controls">
+          <button class="game-ctrl-btn" id="btn-sound" onclick="toggleSound()" title="Toggle sound"><svg viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="7" width="4" height="6"/><polygon points="5,7 11,2 11,18 5,13"/><path d="M13 6.5 Q16.5 10 13 13.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M15.5 4 Q20.5 10 15.5 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg></button>
+          <button class="game-ctrl-btn" id="btn-pause" onclick="togglePause()">Pause</button>
+        </div>
+      </div>
+      <div style="position:relative;line-height:0;">
+        <canvas id="c" width="800" height="500" style="border:2px solid #fff;display:block;"></canvas>
+        <canvas id="overlay" width="800" height="500" style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+        <div id="online-badge"></div>
+      </div>
+      <div id="info"></div>
+    </div>
+  </div>
+
+  <!-- ══ LEADERBOARD ═══════════════════════════════════════════════════ -->
+  <div id="leaderboard" class="screen">
+    <h2>LEADERBOARD</h2>
+    <div id="lb-scroll">
+      <table id="lb-table">
+        <thead><tr><th>#</th><th>Player</th><th>Mode</th><th>Score</th><th>Date</th></tr></thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+    <div id="lb-empty" style="display:none">No games played yet.</div>
+    <div id="lb-source" class="lb-source"></div>
+    <div class="lb-nav">
+      <button onclick="clearLocalScores()" style="font-size:13px;padding:7px 18px;opacity:0.6;">Clear local</button>
+      <button onclick="showMenu()" style="font-size:14px;padding:8px 28px;">&#8592; Back</button>
+    </div>
+  </div>
+
+  <div id="portrait-hint">Rotate to landscape for best experience</div>
+
+  <script type="module" src="/main.ts"></script>
+</body>
+</html>

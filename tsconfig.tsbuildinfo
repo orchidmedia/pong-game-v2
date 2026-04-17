@@ -1,0 +1,1 @@
+{"root":["./src/config.ts","./src/game.ts","./src/main.ts","./src/features/firebase/auth.ts","./src/features/firebase/firestore.ts","./src/features/firebase/rtdb.ts","./src/features/firebase/setup.ts","./src/features/game/constants.ts","./src/features/game/state.ts","./src/features/utils/audio.ts"],"version":"5.9.3"}

@@ -1,0 +1,9 @@
+export const W = 800;
+export const H = 500;
+export const PAD_W = 12;
+export const PAD_H = 80;
+export const BALL_R = 5;
+export const SPEED_INC = 0.3;
+export const WIN_SCORE = 7;
+export const AI_SPEED = { easy: 2.5, medium: 4, hard: 6.5 };
+export const AI_ERROR = { easy: 40, medium: 18, hard: 4 };
