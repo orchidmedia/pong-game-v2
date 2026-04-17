@@ -69,3 +69,15 @@ export function doSignOut() {
   if (!auth) return
   signOut(auth)
 }
+
+// Spec-aligned exports
+export const signInWithGoogle = signInGoogle
+export const signInWithGitHub = signInGithub
+export const signOutUser      = doSignOut
+export const getCurrentUser   = (): User | null => currentUser
+
+export function onAuthStateChange(callback: (user: User | null) => void): () => void {
+  const auth = getFirebaseAuth()
+  if (!auth) { callback(null); return () => {} }
+  return onAuthStateChanged(auth, callback)
+}

@@ -20,3 +20,7 @@ export function initFirebase() {
 export function getFirebaseAuth(): Auth | null { return auth }
 export function getFirebaseFS(): Firestore | null { return db }
 export function getFirebaseRTDB(): Database | null { return rtdb }
+export function getFirebaseApp(): FirebaseApp | null { return app }
+
+// Spec-aligned aliases
+export const initializeFirebase = initFirebase
