@@ -39,9 +39,9 @@ declare global {
 }
 
 initFirebase()
-initAuth()
 initGame()
-initUI()
+initUI()    // must run before initAuth — creates #auth-card elements auth.ts depends on
+initAuth()
 
 window.selectMode       = selectMode
 window.selectDiff       = selectDiff

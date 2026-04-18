@@ -66,15 +66,20 @@ button:disabled { opacity: 0.3; cursor: default; }
 #ol-status { font-size: 13px; opacity: 0.5; text-align: center; }
 .ol-actions { display: flex; gap: 10px; }
 
-/* Auth card */
+/* Auth card — hidden utility holder; auth.ts manages content, screen module controls visibility */
 #auth-card {
   border: 1px solid rgba(255,255,255,0.18);
   padding: 14px 22px;
-  display: none;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   width: min(340px, 90vw);
+  /* Keep off-screen regardless of display value — auth.ts sets display:flex but
+     the card should only appear when the authCard screen clones it into #ui-root */
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  visibility: hidden !important;
 }
 #auth-loading { display: none; }
 #auth-signin  { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
@@ -137,4 +142,236 @@ button:disabled { opacity: 0.3; cursor: default; }
   display: none; position: fixed; bottom: 10px; left: 50%;
   transform: translateX(-50%); font-size: 11px; opacity: 0.35;
   pointer-events: none; white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════
+   UI SYSTEM — Modular Screen / Component Styles
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Screen wrapper ── */
+.ui-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2.5vw, 16px);
+  padding: clamp(16px, 4vw, 32px) 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+/* ── Typography ── */
+.ui-title {
+  font-size: clamp(36px, 14vw, 64px);
+  letter-spacing: clamp(6px, 3vw, 12px);
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.ui-section-label {
+  font-size: clamp(9px, 1.4vw, 11px);
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  width: 100%;
+}
+
+/* ── Buttons ── */
+.ui-btn {
+  background: transparent;
+  border: 2px solid #fff;
+  color: #fff;
+  font-family: monospace;
+  font-size: clamp(13px, 2.5vw, 16px);
+  padding: clamp(8px, 2vw, 10px) clamp(18px, 4vw, 32px);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.ui-btn:hover,
+.ui-btn:focus-visible { background: #fff; color: #000; outline: none; }
+.ui-btn:disabled { opacity: 0.3; cursor: default; }
+
+.ui-btn--secondary {
+  border-color: rgba(255, 255, 255, 0.35);
+  opacity: 0.65;
+}
+.ui-btn--secondary:hover,
+.ui-btn--secondary:focus-visible { background: rgba(255,255,255,0.12); color: #fff; }
+
+.ui-btn--active,
+.ui-btn.active { background: #fff; color: #000; }
+
+.ui-btn--danger { border-color: #e55; color: #e55; }
+.ui-btn--danger:hover { background: #e55; color: #fff; }
+
+.ui-btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── Card ── */
+.ui-card {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: clamp(14px, 3vw, 22px) clamp(18px, 4vw, 28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(380px, 92vw);
+}
+
+/* ── Option card (mode / difficulty selection) ── */
+.ui-option-card {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: clamp(10px, 2.5vw, 14px) clamp(18px, 4vw, 28px);
+  width: min(340px, 92vw);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ui-option-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.5); }
+.ui-option-card.selected { border-color: #fff; background: rgba(255,255,255,0.08); }
+
+.card-title {
+  font-size: clamp(13px, 3vw, 16px);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.card-desc {
+  font-size: clamp(10px, 2vw, 12px);
+  opacity: 0.45;
+  margin-top: 3px;
+}
+
+/* ── Pause card (centered overlay) ── */
+.ui-pause-card {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: clamp(24px, 5vw, 40px) clamp(32px, 8vw, 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 3vw, 20px);
+  background: rgba(0, 0, 0, 0.9);
+  min-width: min(300px, 80vw);
+}
+
+/* ── Divider ── */
+.ui-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 2px 0;
+}
+
+/* ── Leaderboard table ── */
+.ui-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 320px;
+}
+.ui-lb-table th,
+.ui-lb-table td {
+  padding: clamp(5px, 1.5vw, 8px) clamp(7px, 2vw, 14px);
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: clamp(11px, 2vw, 13px);
+  white-space: nowrap;
+}
+.ui-lb-table th {
+  opacity: 0.38;
+  font-size: clamp(9px, 1.4vw, 11px);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ── Skeleton loader ── */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  height: 14px;
+  border-radius: 2px;
+  width: 100%;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Loading overlay ── */
+.ui-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.ui-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Toast notifications ── */
+.ui-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 10px 16px;
+  font-family: monospace;
+  font-size: 13px;
+  z-index: 10000;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(320px, 90vw);
+  animation: toast-in 0.2s ease;
+}
+.ui-toast--success {
+  background: rgba(0, 180, 80, 0.15);
+  border-color: rgba(0, 220, 80, 0.5);
+  color: #4eda7a;
+}
+.ui-toast--error {
+  background: rgba(200, 40, 40, 0.15);
+  border-color: rgba(220, 60, 60, 0.5);
+  color: #f06060;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── State message helpers ── */
+.ui-error-msg {
+  color: #f06060;
+  font-size: 13px;
+  text-align: center;
+  padding: 6px 0;
+}
+.ui-success-msg {
+  color: #4eda7a;
+  font-size: 13px;
+  text-align: center;
+  padding: 6px 0;
 }

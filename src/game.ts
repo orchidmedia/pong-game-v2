@@ -17,6 +17,9 @@ import { saveEntry, getEntries, LeaderboardEntry } from '@/features/firebase/fir
 import { set } from '@/features/firebase/rtdb'
 import { ref as dbRef } from 'firebase/database'
 import { getFirebaseRTDB } from '@/features/firebase/setup'
+import { screenManager } from '@/features/ui/state/screenManager'
+import { ScreenName } from '@/features/ui/state/types'
+import { uiState } from '@/features/ui/state/uiState'
 import type { GameMode, Difficulty } from '@/features/game/state'
 
 // ── DOM refs ───────────────────────────────────────────────────────────────────
@@ -40,9 +43,7 @@ export function saveGuestName(val: string): void {
 }
 
 export function showNameSaved(): void {
-  const el = document.getElementById('name-saved') as HTMLElement
-  el.style.opacity = '1'
-  setTimeout(() => { el.style.opacity = '0' }, 1500)
+  uiState.showSuccess('Name saved!')
 }
 
 // ── Screens ────────────────────────────────────────────────────────────────────
@@ -99,63 +100,35 @@ function onTouchMoveGame(): void {
 export function selectMode(m: string): void {
   sfx.click()
   rt.mode = m as GameMode
-
-  const btnCpu    = document.getElementById('btn-vs-cpu')   as HTMLButtonElement
-  const btnHuman  = document.getElementById('btn-vs-human') as HTMLButtonElement
-  const btnOnline = document.getElementById('btn-online')   as HTMLButtonElement
-  btnCpu.classList.toggle('active',    m === 'cpu')
-  btnHuman.classList.toggle('active',  m === 'human')
-  btnOnline.classList.toggle('active', m === 'online')
-
-  const cpu       = m === 'cpu'
-  const diffLabel = document.getElementById('diff-label') as HTMLElement
-  const diffGroup = document.getElementById('diff-group') as HTMLElement
-  diffLabel.style.opacity       = cpu ? '0.5'  : '0.15'
-  diffGroup.style.opacity       = cpu ? '1'    : '0.25'
-  diffGroup.style.pointerEvents = cpu ? 'auto' : 'none'
-
-  const isOnline    = m === 'online'
-  const btnStart    = document.getElementById('btn-start')     as HTMLButtonElement
-  const onlinePanel = document.getElementById('online-panel')  as HTMLElement
-  btnStart.style.display    = isOnline ? 'none' : ''
-  onlinePanel.style.display = isOnline ? 'flex' : 'none'
-  if (isOnline) showOlChoice()
+  if (m === 'online') {
+    screenManager.navigate(ScreenName.ONLINE_LOBBY, { selectedMode: 'online' })
+  } else {
+    screenManager.navigate(ScreenName.DIFFICULTY_SELECTION, { selectedMode: m as 'cpu' | 'human' })
+  }
 }
 
 export function selectDiff(d: string): void {
   sfx.click()
   rt.difficulty = d as Difficulty
-  ;['easy', 'medium', 'hard'].forEach(x =>
-    (document.getElementById('btn-' + x) as HTMLButtonElement).classList.toggle('active', x === d)
-  )
+  startGame()
 }
 
 // ── Online lobby UI ────────────────────────────────────────────────────────────
 export function showOlChoice(): void {
-  ;(document.getElementById('ol-choice')    as HTMLElement).style.display = 'flex'
-  ;(document.getElementById('ol-waiting')   as HTMLElement).style.display = 'none'
-  ;(document.getElementById('ol-join-form') as HTMLElement).style.display = 'none'
+  screenManager.navigate(ScreenName.ONLINE_LOBBY)
 }
 
 export function showJoinForm(): void {
   sfx.click()
-  ;(document.getElementById('ol-choice')    as HTMLElement).style.display = 'none'
-  const joinForm = document.getElementById('ol-join-form') as HTMLElement
-  joinForm.style.display       = 'flex'
-  joinForm.style.flexDirection = 'column'
-  joinForm.style.alignItems    = 'center'
-  ;(document.getElementById('ol-code-input') as HTMLInputElement).value = ''
-  ;(document.getElementById('ol-code-input') as HTMLInputElement).focus()
+  screenManager.navigate(ScreenName.ONLINE_LOBBY, { showJoin: true })
 }
 
 function showOlWaiting(code: string): void {
-  ;(document.getElementById('ol-choice')    as HTMLElement).style.display = 'none'
-  ;(document.getElementById('ol-join-form') as HTMLElement).style.display = 'none'
-  const waiting = document.getElementById('ol-waiting') as HTMLElement
-  waiting.style.display       = 'flex'
-  waiting.style.flexDirection = 'column'
-  waiting.style.alignItems    = 'center'
-  ;(document.getElementById('ol-code-display') as HTMLElement).textContent = code
+  // Update code display if element exists in current DOM (rendered by onlineLobby screen)
+  const codeEl = document.getElementById('ol-code-display')
+  if (codeEl) codeEl.textContent = code
+  // Re-render online lobby in waiting state
+  screenManager.navigate(ScreenName.ONLINE_LOBBY, { selectedMode: 'online' })
 }
 
 // ── Online room management ─────────────────────────────────────────────────────
@@ -180,7 +153,7 @@ export async function joinRoom(): Promise<void> {
 export async function cancelRoom(): Promise<void> {
   sfx.click()
   await _cancelRoom()
-  showOlChoice()
+  screenManager.navigate(ScreenName.ONLINE_LOBBY)
 }
 
 // ── Launch online game ─────────────────────────────────────────────────────────
@@ -252,7 +225,7 @@ export function goToMenu(): void {
   cancelAnimationFrame(rt.animId)
   if (rt.onlineRole) leaveRoom()
   btnPause.style.display = ''
-  showMenu()
+  screenManager.navigate(ScreenName.MAIN_MENU)
 }
 
 function beginRunning(): void {
@@ -331,32 +304,12 @@ async function saveResult(winner: string, displayName: string, modeLabel: string
   try { await saveEntry(entry, myDisplayName()) } catch (e) { console.warn('Firestore:', e) }
 }
 
-async function renderLeaderboard(): Promise<void> {
-  const body  = document.getElementById('lb-body')   as HTMLElement
-  const empty = document.getElementById('lb-empty')  as HTMLElement
-  const src   = document.getElementById('lb-source') as HTMLElement
-  body.innerHTML = `<tr><td colspan="5" style="opacity:0.3;text-align:center;padding:16px">Loading…</td></tr>`
-
-  let lb: LeaderboardEntry[]
-  let online = false
-  try { lb = await getEntries(); online = true } catch { lb = loadLB() }
-
-  src.textContent = online ? '🌐 Online leaderboard' : '💾 Local scores only'
-  body.innerHTML  = ''
-  empty.style.display = lb.length ? 'none' : 'block'
-  lb.forEach((e, i) => {
-    const tr = document.createElement('tr')
-    if (i === 0) tr.classList.add('gold')
-    if (i === 1) tr.classList.add('silver')
-    if (i === 2) tr.classList.add('bronze')
-    tr.innerHTML = `<td>${i + 1}</td><td>${e.winner || e.displayName || '—'}</td><td>${e.mode}</td><td>${e.score}</td><td>${e.date}</td>`
-    body.appendChild(tr)
-  })
-}
-
 export function clearLocalScores(): void {
   if (!confirm('Clear local scores?')) return
-  saveLB([]); renderLeaderboard()
+  saveLB([])
+  uiState.showSuccess('Local scores cleared')
+  // Re-navigate to leaderboard so it refreshes
+  screenManager.navigate(ScreenName.LEADERBOARD)
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
