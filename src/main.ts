@@ -1,33 +1,16 @@
 import { initFirebase } from '@/features/firebase/setup'
-import { initAuth, signInGoogle, signInGithub, doSignOut } from '@/features/firebase/auth'
+import { initAuth } from '@/features/firebase/auth'
+import { initGame } from '@/game'
 import {
-  initGame,
-  selectMode,
-  selectDiff,
-  startGame,
-  togglePause,
-  goToMenu,
-  showLeaderboard,
-  showMenu,
-  clearLocalScores,
-  createRoom,
-  joinRoom,
-  cancelRoom,
-  showJoinForm,
-  showOlChoice,
-  saveGuestName,
-  showNameSaved,
-  toggleSound,
-} from '@/game'
+  initUI,
+  selectMode, selectDiff, startGame, togglePause, goToMenu,
+  showLeaderboard, showMenu, clearLocalScores, createRoom, joinRoom,
+  cancelRoom, showJoinForm, showOlChoice, saveGuestName, showNameSaved,
+  toggleSound, signInGoogle, signInGithub, signOutUser, doSignOut,
+  showSettings, showAuthCard,
+} from '@/features/ui'
 
-// Initialise Firebase and Auth
-initFirebase()
-initAuth()
-
-// Initialise game
-initGame()
-
-// Expose functions that HTML onclick handlers call
+// Types for window
 declare global {
   interface Window {
     selectMode:       typeof selectMode
@@ -48,9 +31,17 @@ declare global {
     toggleSound:      typeof toggleSound
     signInGoogle:     typeof signInGoogle
     signInGithub:     typeof signInGithub
+    signOutUser:      typeof signOutUser
     doSignOut:        typeof doSignOut
+    showSettings:     typeof showSettings
+    showAuthCard:     typeof showAuthCard
   }
 }
+
+initFirebase()
+initAuth()
+initGame()
+initUI()
 
 window.selectMode       = selectMode
 window.selectDiff       = selectDiff
@@ -70,4 +61,7 @@ window.showNameSaved    = showNameSaved
 window.toggleSound      = toggleSound
 window.signInGoogle     = signInGoogle
 window.signInGithub     = signInGithub
+window.signOutUser      = signOutUser
 window.doSignOut        = doSignOut
+window.showSettings     = showSettings
+window.showAuthCard     = showAuthCard

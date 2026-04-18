@@ -46,15 +46,16 @@ export function showNameSaved(): void {
 }
 
 // ── Screens ────────────────────────────────────────────────────────────────────
-function showScreen(id: string): void {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'))
-  document.getElementById('game')!.classList.remove('visible')
-  if (id === 'game') document.getElementById('game')!.classList.add('visible')
-  else               document.getElementById(id)!.classList.add('visible')
+function showGameCanvas(): void {
+  const uiRoot = document.getElementById('ui-root')
+  const gameEl = document.getElementById('game')
+  if (uiRoot) uiRoot.style.display = 'none'
+  if (gameEl) gameEl.classList.add('visible')
 }
 
-export function showMenu(): void { sfx.click(); showScreen('menu') }
-export async function showLeaderboard(): Promise<void> { sfx.click(); showScreen('leaderboard'); await renderLeaderboard() }
+// These are no-ops now — navigation is handled by ui/index.ts via screenManager
+export function showMenu(): void { sfx.click() }
+export async function showLeaderboard(): Promise<void> { sfx.click() }
 
 // ── Responsive ─────────────────────────────────────────────────────────────────
 export function resizeGame(): void {
@@ -184,7 +185,7 @@ export async function cancelRoom(): Promise<void> {
 
 // ── Launch online game ─────────────────────────────────────────────────────────
 function launchOnlineGame(): void {
-  showScreen('game')
+  showGameCanvas()
   resizeGame()
   rt.state.left.score  = rt.state.right.score = 0
   rt.state.left.y = rt.state.right.y = H / 2 - PAD_H / 2
@@ -230,7 +231,7 @@ function opponentDisconnected(): void {
 // ── Local game flow ────────────────────────────────────────────────────────────
 export function startGame(): void {
   sfx.click()
-  showScreen('game')
+  showGameCanvas()
   resizeGame()
   rt.state.left.score = rt.state.right.score = 0
   rt.lastWinner = null
@@ -366,12 +367,10 @@ export function initGame(): void {
   setupTouchListeners(canvas, onTouchStartGame, onTouchMoveGame)
   setupKeyboardListeners(onKeyDown)
 
-  selectMode('cpu')
-  selectDiff('medium')
+  // Set default mode/difficulty on runtime directly (UI is managed by screenManager)
+  rt.mode = 'cpu'
+  rt.difficulty = 'medium'
   resizeGame()
-
-  const savedName = localStorage.getItem('pong_guest_name')
-  if (savedName) (document.getElementById('guest-name-input') as HTMLInputElement).value = savedName
 }
 
 // Re-export toggleSound
