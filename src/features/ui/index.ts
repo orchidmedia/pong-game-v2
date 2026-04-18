@@ -2,7 +2,7 @@ import { screenManager } from './state/screenManager'
 import { uiState } from './state/uiState'
 import { ScreenName } from './state/types'
 import { rt } from '@/features/game/runtime'
-import { signInGoogle as _signInGoogle, signInGithub as _signInGithub, doSignOut as _doSignOut } from '@/features/firebase/auth'
+import { signInGoogle as _signInGoogle, signInGithub as _signInGithub, doSignOut as _doSignOut, onAuthStateChange } from '@/features/firebase/auth'
 
 // Screen factories
 import { createMainMenuScreen } from './screens/mainMenu'
@@ -78,6 +78,14 @@ export function initUI(): void {
   screenManager.register(ScreenName.AUTH_CARD,            createAuthCardScreen)
 
   screenManager.navigate(ScreenName.MAIN_MENU)
+
+  // After sign-in: navigate to main menu so it re-renders with user's name
+  onAuthStateChange((user) => {
+    if (screenManager.currentScreen === ScreenName.AUTH_CARD) {
+      screenManager.navigate(ScreenName.MAIN_MENU)
+      if (user) uiState.showSuccess(`Welcome, ${user.displayName ?? user.email ?? 'Player'}!`)
+    }
+  })
 }
 
 // ── The exported window functions ──
@@ -170,15 +178,11 @@ export function toggleSound(): void {
 }
 
 export function signInGoogle(): void {
-  uiState.setLoading(true)
   _signInGoogle()
-  setTimeout(() => uiState.setLoading(false), 3000)
 }
 
 export function signInGithub(): void {
-  uiState.setLoading(true)
   _signInGithub()
-  setTimeout(() => uiState.setLoading(false), 3000)
 }
 
 export function signOutUser(): void {
